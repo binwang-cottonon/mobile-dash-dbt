@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: 'analytics_195776711'
+    tables:
+      - name: events_*
+      - name: events_intraday_*
+      
+      # `cotton-on-e41b2.analytics_195776711.events_20220108`
+
+      
