@@ -5,7 +5,10 @@ sources:
     tables:
       - name: events_*
       - name: events_intraday_*
+      - name: dateDimension 
       
       # `cotton-on-e41b2.analytics_195776711.events_20220108`
+
+         
 
       
