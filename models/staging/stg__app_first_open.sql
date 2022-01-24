@@ -12,7 +12,7 @@ as
       ,case 
         when device.operating_system in ('iOS', 'IOS') then 'iOS' else 'Android' end as operating_system
       ,row_number() over (partition by user_pseudo_id order by event_timestamp) as rn
-    from `cotton-on-e41b2.analytics_195776711.events_*` ev 
+    from {{ ref('base__app_logs') }}
   where event_name = 'first_open'
   )
 
