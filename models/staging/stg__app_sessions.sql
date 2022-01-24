@@ -3,7 +3,9 @@ select
   ,up.value.int_value as ga_session_id
   ,event_timestamp
   ,parse_date('%Y%m%d',event_date) as event_date
-  ,device.operating_system
+  ,case 
+      when device.operating_system in ('iOS', 'IOS') then 'iOS' else 'Android' end 
+   as operating_system
   ,regexp_replace(
     case 
       when geo.country not in ('Australia', 'New Zealand', 'United States') then 'Other'
