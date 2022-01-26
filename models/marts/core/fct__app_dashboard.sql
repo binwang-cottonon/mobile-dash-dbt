@@ -1,7 +1,13 @@
+{{ 
+  config(
+  materialized='table'
+  ) 
+}}
+
 with sessions as
 (
   select
-    event_date
+    event_date_parsed
     ,country
     ,operating_system
     ,count(*) as sessions
@@ -12,7 +18,7 @@ with sessions as
 transactions as 
 (
   select
-    event_date
+    event_date_parsed
     ,country
     ,operating_system
     ,count(*) as transactions
@@ -24,7 +30,7 @@ transactions as
 first_open as 
 (
   select
-    event_date
+    event_date_parsed
     ,country
     ,operating_system
     ,count(*) as downloads
@@ -34,7 +40,7 @@ first_open as
 
 
 select
-  s.event_date
+  s.event_date_parsed
   ,s.country
   ,s.operating_system
   ,s.sessions
@@ -45,15 +51,15 @@ select
 from sessions s
 
 left join transactions t  
-  on s.event_date = t.event_date
+  on s.event_date_parsed = t.event_date_parsed
   and s.country = t.country
   and s.operating_system = t.operating_system
 
 left join first_open fo  
-  on s.event_date = fo.event_date
+  on s.event_date_parsed = fo.event_date_parsed
   and s.country = fo.country
   and s.operating_system = fo.operating_system
 
-order by event_date desc, country  
+order by event_date_parsed desc, country  
 
 
