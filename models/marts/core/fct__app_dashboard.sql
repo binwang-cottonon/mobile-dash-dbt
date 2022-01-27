@@ -40,13 +40,15 @@ first_open as
 
 
 select
-  s.event_date_parsed
+   dd.Trade_Month_Code
+  ,dd.TradeWeekCode
+  ,s.event_date_parsed
   ,s.country
   ,s.operating_system
-  ,s.sessions
-  ,fo.downloads
-  ,t.transactions
-  ,t.sales_usd
+  ,ifnull(s.sessions, 0) as sessions
+  ,ifnull(fo.downloads, 0) as downloads
+  ,ifnull(t.transactions, 0) as transactions
+  ,ifnull(t.sales_usd, 0) as sales_usd
 
 from sessions s
 
@@ -59,6 +61,9 @@ left join first_open fo
   on s.event_date_parsed = fo.event_date_parsed
   and s.country = fo.country
   and s.operating_system = fo.operating_system
+
+left join {{ ref('dim__date') }} dd
+  on s.event_date_parsed = dd.date  
 
 order by event_date_parsed desc, country  
 
