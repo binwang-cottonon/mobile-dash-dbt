@@ -49,6 +49,7 @@ select
   ,ifnull(fo.downloads, 0) as downloads
   ,ifnull(t.transactions, 0) as transactions
   ,ifnull(t.sales_usd, 0) as sales_usd
+  ,ifnull(t.sales_usd*1.47, 0) as sales_aud
 
 from sessions s
 
