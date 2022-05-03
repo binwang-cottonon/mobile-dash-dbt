@@ -13,7 +13,6 @@ with sessions as
     ,operating_system
     ,count(*) as sessions
   from {{ ref('stg__app_sessions_wip') }}
-  where event_date_parsed > date_sub(current_date(), interval 90 day)
   group by 1,2,3  
 ),
 
@@ -26,7 +25,6 @@ transactions as
     ,count(*) as transactions
     ,sum(event_value_in_usd) as sales_usd
   from {{ ref('stg__app_transactions_wip') }}
-  where event_date_parsed > date_sub(current_date(), interval 90 day)
   group by 1,2,3
 ),
 
@@ -38,7 +36,6 @@ first_open as
     ,operating_system
     ,count(*) as downloads
   from {{ ref('stg__app_first_open_wip') }}
-  where event_date_parsed > date_sub(current_date(), interval 90 day)
   group by 1,2,3
 )
 
