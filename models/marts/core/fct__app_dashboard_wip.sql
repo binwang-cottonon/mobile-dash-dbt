@@ -1,6 +1,6 @@
 {{ 
   config(
-    materialized='incremental'
+    materialized='incremental',
     unique_key='surrogate_key'
   ) 
 }}
