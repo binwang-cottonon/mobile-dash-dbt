@@ -1,13 +1,13 @@
 {{ 
     config(
       materialized='incremental',
-      on_schema_change='append_new_columns'
-    ),
-    partition_by={
-      "field": "event_date_parsed",
-      "data_type": "date",
-      "granularity": "day"
-    }
+      on_schema_change='append_new_columns',
+      partition_by={
+        "field": "event_date_parsed",
+        "data_type": "date",
+        "granularity": "day"
+      }    
+    )
 }}
 
 select *
