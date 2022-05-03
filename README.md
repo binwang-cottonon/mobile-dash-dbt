@@ -17,10 +17,28 @@ Try running the following commands:
 
 ### 
 
-if we want to partition base__app_log.sql
+#### update fct__app_dashboard to include a surrogate key so we can do increments
 
-- manually partition table
+- update table with surrogate key
+```sql
+--scripts to update app_dashboard table
+alter table `cotton-on-e41b2.dbt_prod_app.fct__app_dashboard`
+add column surrogate_key STRING;
+
+update `cotton-on-e41b2.dbt_prod_app.fct__app_dashboard`
+set surrogate_key = event_date_parsed || '_' || country || '_' || operating_system
+where event_date_parsed is not null;
+-- end of script
+```
+
 - update model
+
+
+#### if we want to partition base__app_log.sql
+
+- manually partition table  https://cloud.google.com/bigquery/docs/creating-partitioned-tables#sql
+- update model
+
 ```sql
 {{ 
     config(
