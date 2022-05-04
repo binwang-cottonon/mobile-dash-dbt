@@ -34,41 +34,153 @@ where event_date_parsed is not null;
 - update model
 
 
-#### if we want to partition base__app_log.sql
+### rebuild history data of fct__app_dashboard_new
 
-- manually partition table  https://cloud.google.com/bigquery/docs/creating-partitioned-tables#sql
-- update model
 
 ```sql
-{{ 
-    config(
-      materialized='incremental',
-      on_schema_change='append_new_columns',
-      partition_by={
-        "field": "event_date_parsed",
-        "data_type": "date",
-        "granularity": "day"
-      }    
-    )
-}}
+declare x int64 default 1;
+declare dates array<string>;
 
-select *
+set dates = (
+  select array_agg(datekey) as list
+  from (
+    select cast(datekey as string) as datekey
+    from `cotton-on-e41b2.dbt_prod_app.dim__date` 
+    where date between '2019-05-14' and '2022-05-xx'
+  )
+);
 
-,parse_date('%Y%m%d',event_date) as event_date_parsed
-,case 
-    when device.operating_system in ('iOS', 'IOS') then 'iOS' else 'Android' end 
- as operating_system
-,regexp_replace(
-  case 
-    when geo.country not in ('Australia', 'New Zealand', 'United States') then 'Other'
-    else geo.country
-  end, ' ', '') 
- as country
+while x <= array_length(dates) do
 
-from {{ source('analytics_195776711', 'events_*')}}
-where _table_suffix > format_date('%Y%m%d', date_sub(current_date(), interval 90 day))
-{% if is_incremental() %}
-  -- this filter will only be applied on an incremental run
-  and event_timestamp > (select max(event_timestamp) from {{ this }})
-{% endif %}
+insert into `cotton-on-e41b2.dbt_prod_app.fct__app_dashboard_new` 
+with l90d_plus_intraday as (
+  select * 
+  from `cotton-on-e41b2.analytics_195776711.events_*`
+  where _table_suffix = dates[ORDINAL(x)]
+  union all
+  select * from `cotton-on-e41b2.analytics_195776711.events_intraday_*`
+),
+base as (
+  select *
+  ,parse_date('%Y%m%d',event_date) as event_date_parsed
+  ,case 
+      when device.operating_system in ('iOS', 'IOS') then 'iOS' else 'Android' end 
+  as operating_system
+  ,regexp_replace(
+    case 
+      when geo.country not in ('Australia', 'New Zealand', 'United States') then 'Other'
+      else geo.country
+    end, ' ', '') 
+  as country
+  from l90d_plus_intraday
+),
+sessions_temp as (
+  select
+    user_pseudo_id
+    ,up.value.int_value as ga_session_id
+    ,event_timestamp
+    ,event_date_parsed
+    ,operating_system
+    ,country
+  from base,
+  unnest (user_properties) as up
+  where event_name = 'session_start' and up.key = 'ga_session_id'
+),
+first_open_t1 as (
+  select
+      user_pseudo_id
+      ,timestamp_micros(event_timestamp) as first_open_ts
+      ,event_date_parsed
+      ,country
+      ,operating_system
+      ,row_number() over (partition by user_pseudo_id order by event_timestamp) as rn
+    from base
+  where event_name = 'first_open'
+),
+first_open_temp as (
+  select
+    user_pseudo_id
+    ,first_open_ts
+    ,event_date_parsed
+    ,country
+    ,operating_system
+  from first_open_t1
+  where rn = 1
+),
+transactions_temp as (
+  select
+    user_pseudo_id
+    --,up.value.int_value as ga_session_id
+    ,event_timestamp
+    ,event_date_parsed
+    ,country
+    ,operating_system
+    ,max(event_value_in_usd) as event_value_in_usd
+  from base,
+      unnest (user_properties) as up
+  where event_name = 'ecommerce_purchase' or event_name = 'purchase' --and up.key = 'ga_session_id'
+  group by 1,2,3,4,5
+),
+sessions as
+(
+  select
+    event_date_parsed
+    ,country
+    ,operating_system
+    ,count(*) as sessions
+  from sessions_temp
+  group by 1,2,3  
+),
+transactions as 
+(
+  select
+    event_date_parsed
+    ,country
+    ,operating_system
+    ,count(*) as transactions
+    ,sum(event_value_in_usd) as sales_usd
+  from transactions_temp
+  group by 1,2,3
+),
+first_open as 
+(
+  select
+    event_date_parsed
+    ,country
+    ,operating_system
+    ,count(*) as downloads
+  from first_open_temp
+  group by 1,2,3
+)
+select
+  s.event_date_parsed || '_' || s.country || '_' || s.operating_system as surrogate_key
+  ,dd.Trade_Month_Code
+  ,dd.TradeWeekCode
+  ,s.event_date_parsed
+  ,s.country
+  ,s.operating_system
+  ,ifnull(s.sessions, 0) as sessions
+  ,ifnull(fo.downloads, 0) as downloads
+  ,ifnull(t.transactions, 0) as transactions
+  ,ifnull(t.sales_usd, 0) as sales_usd
+  ,ifnull(t.sales_usd*1.47, 0) as sales_aud
+
+from sessions s
+
+left join transactions t  
+  on s.event_date_parsed = t.event_date_parsed
+  and s.country = t.country
+  and s.operating_system = t.operating_system
+
+left join first_open fo  
+  on s.event_date_parsed = fo.event_date_parsed
+  and s.country = fo.country
+  and s.operating_system = fo.operating_system
+
+left join `cotton-on-e41b2.dbt_prod_app.dim__date` dd
+  on s.event_date_parsed = dd.date  
+order by event_date_parsed desc, country  ;
+
+SET x = x + 1;
+end while;
 ```
