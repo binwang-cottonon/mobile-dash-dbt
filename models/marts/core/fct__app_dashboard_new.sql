@@ -12,7 +12,7 @@ with sessions as
     ,country
     ,operating_system
     ,count(*) as sessions
-  from {{ ref('stg__app_sessions_wip') }}
+  from {{ ref('stg__app_sessions_new') }}
   group by 1,2,3  
 ),
 
@@ -24,7 +24,7 @@ transactions as
     ,operating_system
     ,count(*) as transactions
     ,sum(event_value_in_usd) as sales_usd
-  from {{ ref('stg__app_transactions_wip') }}
+  from {{ ref('stg__app_transactions_new') }}
   group by 1,2,3
 ),
 
@@ -35,7 +35,7 @@ first_open as
     ,country
     ,operating_system
     ,count(*) as downloads
-  from {{ ref('stg__app_first_open_wip') }}
+  from {{ ref('stg__app_first_open_new') }}
   group by 1,2,3
 )
 

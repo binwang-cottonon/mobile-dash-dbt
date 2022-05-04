@@ -7,7 +7,7 @@ as
       ,country
       ,operating_system
       ,row_number() over (partition by user_pseudo_id order by event_timestamp) as rn
-    from {{ ref('base__app_logs_wip') }}
+    from {{ ref('base__app_logs_new') }}
   where event_name = 'first_open'
   )
 
