@@ -7,7 +7,7 @@
 with l90d_plus_intraday as (
   select * 
   from {{ source('analytics_195776711', 'events_*')}}
-  where _table_suffix > format_date('%Y%m%d', date_sub(current_date(), interval 10 day))
+  where _table_suffix > format_date('%Y%m%d', date_sub(current_date(), interval 6 day))
   union all
   select * from {{ source('analytics_195776711', 'events_intraday_*')}}
 )
