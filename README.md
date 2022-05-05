@@ -57,8 +57,8 @@ with l90d_plus_intraday as (
   select * 
   from `cotton-on-e41b2.analytics_195776711.events_*`
   where _table_suffix = dates[ORDINAL(x)]
-  union all
-  select * from `cotton-on-e41b2.analytics_195776711.events_intraday_*`
+--   union all
+--   select * from `cotton-on-e41b2.analytics_195776711.events_intraday_*`
 ),
 base as (
   select *
