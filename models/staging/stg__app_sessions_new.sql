@@ -6,5 +6,5 @@ select
   ,operating_system
   ,country
 from {{ ref('base__app_logs_new') }},
-     unnest (user_properties) as up
+     unnest (event_params) as up
 where event_name = 'session_start' and up.key = 'ga_session_id'
