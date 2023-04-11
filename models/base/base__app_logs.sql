@@ -21,7 +21,7 @@ select *
 from {{ source('analytics_195776711', 'events_*')}}
 where _table_suffix > format_date('%Y%m%d', date_sub(current_date(), interval 90 day)) 
 --EDIT START 11/4 to filter to old app
-    and stream id in ('1425059297','1425059297')
+   -- and stream id in ('1425059297','1425059297')
 --EDIT END  11/4
 
 {% if is_incremental() %}
