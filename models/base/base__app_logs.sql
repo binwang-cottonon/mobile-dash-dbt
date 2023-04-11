@@ -19,7 +19,11 @@ select *
  as country
 
 from {{ source('analytics_195776711', 'events_*')}}
-where _table_suffix > format_date('%Y%m%d', date_sub(current_date(), interval 90 day))
+where _table_suffix > format_date('%Y%m%d', date_sub(current_date(), interval 90 day)) 
+--EDIT START 11/4 to filter to old app
+    and stream id in ('1425059297','1425059297')
+--EDIT END  11/4
+
 {% if is_incremental() %}
   -- this filter will only be applied on an incremental run
   and event_timestamp > (select max(event_timestamp) from {{ this }})
